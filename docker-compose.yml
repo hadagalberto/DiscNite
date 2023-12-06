@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  sql-server:
+    image: mcr.microsoft.com/mssql/server
+    environment:
+      SA_PASSWORD: "PedesWord123"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      MSSQL_TCP_PORT: 1433
+    ports:
+      - "1433:1433"
+
+  discnite-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - sql-server
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sql-server,1433;Database=DiscNite;User Id=sa;Password=PedesWord123
