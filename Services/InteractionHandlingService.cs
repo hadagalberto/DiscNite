@@ -53,6 +53,7 @@ namespace DiscNite.Services
             var updater = new HangfireUpdater(_db, _fortniteApiService, _discord);
 
             RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), Cron.Minutely);
+            RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(21));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

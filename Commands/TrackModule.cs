@@ -219,7 +219,7 @@ namespace DiscNite.Commands
                 response.AppendLine("**Season Atual**");
                 response.AppendLine($"🎮 Partidas: {seasonStats.Stats.All.Overall.Matches}");
                 response.AppendLine($"🌟 **Nível:** {seasonStats.BattlePass.Level}");
-                response.AppendLine($"🏆 Vitórias: {seasonStats.Stats.All.Overall.Wins}");
+                response.AppendLine($"🏆 Vitórias: {seasonStats.Stats.All.Overall.Wins}%");
                 response.AppendLine($"📊 W/L: {seasonStats.Stats.All.Overall.WinRate}");
                 response.AppendLine($"💀 Kills: {seasonStats.Stats.All.Overall.Kills}");
                 response.AppendLine($"💔 Mortes: {seasonStats.Stats.All.Overall.Deaths}");
@@ -236,7 +236,7 @@ namespace DiscNite.Commands
             {
                 response.AppendLine("**Geral**");
                 response.AppendLine($"🎮 Partidas: {lifetimeStats.Stats.All.Overall.Matches}");
-                response.AppendLine($"🏆 Vitórias: {lifetimeStats.Stats.All.Overall.Wins}");
+                response.AppendLine($"🏆 Vitórias: {lifetimeStats.Stats.All.Overall.Wins}%");
                 response.AppendLine($"📊 W/L: {lifetimeStats.Stats.All.Overall.WinRate}");
                 response.AppendLine($"💀 Kills: {lifetimeStats.Stats.All.Overall.Kills}");
                 response.AppendLine($"💔 Mortes: {lifetimeStats.Stats.All.Overall.Deaths}");
@@ -268,6 +268,42 @@ namespace DiscNite.Commands
 
             await RespondAsync($"Canal atualizado para {this.Context.Channel.Name}");
         }
+
+        [SlashCommand("top5", "Mostra os top 5 jogadores por servidor")]
+        public async Task ShowTop5()
+        {
+            try
+            {
+                var guidId = this.Context.Guild.Id;
+
+                var topPlayersByServer = await _dbContext.FortnitePlayers
+                    .Where(x => x.DiscordServer.IdDiscord == guidId)
+                    .OrderByDescending(x => x.Vitorias)
+                    .Take(5)
+                    .ToListAsync();
+
+                if (topPlayersByServer.Count == 0)
+                {
+                    await RespondAsync("Não há jogadores acompanhados para mostrar ❌");
+                    return;
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("**🏆 Top 5 Jogadores desse servidor 🏆**:");
+
+                foreach (var player in topPlayersByServer)
+                {
+                    sb.AppendLine($"🥇 {player.Nome} - {player.Vitorias} {(player.Vitorias == 1 ? "vitória" : "vitórias")}");
+                }
+
+                await RespondAsync(sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                await RespondAsync("Ocorreu um erro ao processar a solicitação ❌");
+            }
+        }
+
 
     }
 }
