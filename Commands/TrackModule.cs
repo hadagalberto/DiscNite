@@ -219,8 +219,8 @@ namespace DiscNite.Commands
                 response.AppendLine("**Season Atual**");
                 response.AppendLine($"🎮 Partidas: {seasonStats.Stats.All.Overall.Matches}");
                 response.AppendLine($"🌟 **Nível:** {seasonStats.BattlePass.Level}");
-                response.AppendLine($"🏆 Vitórias: {seasonStats.Stats.All.Overall.Wins}%");
-                response.AppendLine($"📊 W/L: {seasonStats.Stats.All.Overall.WinRate}");
+                response.AppendLine($"🏆 Vitórias: {seasonStats.Stats.All.Overall.Wins}");
+                response.AppendLine($"📊 W/L: {seasonStats.Stats.All.Overall.WinRate}%");
                 response.AppendLine($"💀 Kills: {seasonStats.Stats.All.Overall.Kills}");
                 response.AppendLine($"💔 Mortes: {seasonStats.Stats.All.Overall.Deaths}");
                 response.AppendLine($"🔪 K/D: {seasonStats.Stats.All.Overall.Kd}");
@@ -236,8 +236,8 @@ namespace DiscNite.Commands
             {
                 response.AppendLine("**Geral**");
                 response.AppendLine($"🎮 Partidas: {lifetimeStats.Stats.All.Overall.Matches}");
-                response.AppendLine($"🏆 Vitórias: {lifetimeStats.Stats.All.Overall.Wins}%");
-                response.AppendLine($"📊 W/L: {lifetimeStats.Stats.All.Overall.WinRate}");
+                response.AppendLine($"🏆 Vitórias: {lifetimeStats.Stats.All.Overall.Wins}");
+                response.AppendLine($"📊 W/L: {lifetimeStats.Stats.All.Overall.WinRate}%");
                 response.AppendLine($"💀 Kills: {lifetimeStats.Stats.All.Overall.Kills}");
                 response.AppendLine($"💔 Mortes: {lifetimeStats.Stats.All.Overall.Deaths}");
                 response.AppendLine($"🔪 K/D: {lifetimeStats.Stats.All.Overall.Kd}");
