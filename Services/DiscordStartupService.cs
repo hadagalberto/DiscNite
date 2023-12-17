@@ -1,7 +1,6 @@
 ﻿using DiscNite.Utils;
 using Discord;
 using Discord.WebSocket;
-using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
