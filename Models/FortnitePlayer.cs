@@ -15,6 +15,7 @@ namespace DiscNite.Models
         public Guid IdDiscordServer { get; set; }
         public DateTime DateUpdated { get; set; }
         public long Vitorias { get; set; }
+        public string PlayerStatsJSON { get; set; }
 
         public virtual DiscordServer DiscordServer { get; set; }
     }

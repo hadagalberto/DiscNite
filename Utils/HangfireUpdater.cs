@@ -32,7 +32,7 @@ namespace DiscNite.Utils
 
             foreach (var player in players)
             {
-                await ProcessPlayerUpdate(player);                
+                await ProcessPlayerUpdate(player);
             }
         }
 
@@ -48,20 +48,22 @@ namespace DiscNite.Utils
                     return;
                 }
 
-                if (player.Vitorias == stats.Stats.All.Overall.Wins)
+                if (player.Vitorias != stats.Stats.All.Overall.Wins)
                 {
-                    return;
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"O jogador **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
+                    sb.AppendLine($"No total agora são {stats.Stats.All.Overall.Wins}");
+
+                    player.Vitorias = stats.Stats.All.Overall.Wins;
+
+                    await _discord.GetGuild(player.DiscordServer.IdDiscord).GetTextChannel(player.DiscordServer.IdTextChannel).SendMessageAsync(sb.ToString());
                 }
 
-                var sb = new StringBuilder();
-                sb.AppendLine($"O jogador **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
-                sb.AppendLine($"No total agora são {stats.Stats.All.Overall.Wins}");
+                player.PlayerStatsJSON = Newtonsoft.Json.JsonConvert.SerializeObject(stats);
 
-                player.Vitorias = stats.Stats.All.Overall.Wins;
                 await _dbContext.SaveChangesAsync();
-
-                await _discord.GetGuild(player.DiscordServer.IdDiscord).GetTextChannel(player.DiscordServer.IdTextChannel).SendMessageAsync(sb.ToString());
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating player stats");
             }
@@ -107,8 +109,6 @@ namespace DiscNite.Utils
                 _logger.LogError(ex, "Erro ao processar os 5 melhores jogadores por servidor");
             }
         }
-
-
 
     }
 }

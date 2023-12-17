@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Microsoft.Extensions.Logging;
 
-namespace DiscNite.Util
+namespace DiscNite.Utils
 {
     public static class LogHelper
     {

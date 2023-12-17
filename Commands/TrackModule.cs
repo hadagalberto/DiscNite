@@ -1,6 +1,7 @@
 ﻿using DiscNite.Data;
 using DiscNite.Services;
 using Discord.Interactions;
+using Fortnite_API.Objects.V1;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -61,7 +62,8 @@ namespace DiscNite.Commands
                         Nome = stats.Account.Name,
                         IdDiscordServer = serverInDb.IdDiscordServer,
                         DateUpdated = stats.Stats.All.Overall.LastModified,
-                        Vitorias = stats.Stats.All.Overall.Wins
+                        Vitorias = stats.Stats.All.Overall.Wins,
+                        PlayerStatsJSON = Newtonsoft.Json.JsonConvert.SerializeObject(stats)
                     };
 
                     await _dbContext.FortnitePlayers.AddAsync(playerInDb);
@@ -72,6 +74,7 @@ namespace DiscNite.Commands
                     playerInDb.Nome = stats.Account.Name;
                     playerInDb.DateUpdated = stats.Stats.All.Overall.LastModified;
                     playerInDb.Vitorias = stats.Stats.All.Overall.Wins;
+                    playerInDb.PlayerStatsJSON = Newtonsoft.Json.JsonConvert.SerializeObject(stats);
 
                     _dbContext.FortnitePlayers.Update(playerInDb);
                     await _dbContext.SaveChangesAsync();
@@ -82,18 +85,6 @@ namespace DiscNite.Commands
                 await RespondAsync($"Erro ao salvar no banco de dados: {ex.Message}");
                 return;
             }
-
-            //var response = new StringBuilder();
-
-            //response.AppendLine($"**{stats.Account.Name}**");
-            //response.AppendLine($"🎮 Partidas: {stats.Stats.All.Overall.Matches}");
-            //response.AppendLine($"**Nível:** {stats.BattlePass.Level}");
-            //response.AppendLine($"🏆 Vitórias: {stats.Stats.All.Overall.Wins}");
-            //response.AppendLine($"📊 W/L: {stats.Stats.All.Overall.WinRate}");
-            //response.AppendLine($"💀 Kills: {stats.Stats.All.Overall.Kills}");
-            //response.AppendLine($"💔 Mortes: {stats.Stats.All.Overall.Deaths}");
-            //response.AppendLine($"🔪 K/D: {stats.Stats.All.Overall.Kd}");
-            //response.AppendLine($"🎖️ Pontuação acumulada: {stats.Stats.All.Overall.Score}");
 
             var response = $"Agora estaremos acompanhando a evolução do player {stats.Account.Name}!";
 
@@ -203,8 +194,19 @@ namespace DiscNite.Commands
         [SlashCommand("stats", "Mostra as estatísticas do player")]
         public async Task ShowStats(string player)
         {
-            var seasonStats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player);
+            var seasonStatsJSON = _dbContext.FortnitePlayers.FirstOrDefault(x => x.Nome == player).PlayerStatsJSON;
             var lifetimeStats = await _fortniteApiService.GetPlayerStaticsAllTimeAsync(player);
+
+            BrStatsV2V1 seasonStats;
+
+            if (seasonStatsJSON == null || seasonStatsJSON == string.Empty)
+            {
+                seasonStats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player);
+            }
+            else
+            {
+                seasonStats = Newtonsoft.Json.JsonConvert.DeserializeObject<BrStatsV2V1>(seasonStatsJSON);
+            }
 
             var response = new StringBuilder();
 
@@ -304,6 +306,44 @@ namespace DiscNite.Commands
             }
         }
 
+        [SlashCommand("top5all", "Mostra os top 5 jogadores de todos os servidores")]
+        public async Task ShowTop5All()
+        {
+            try
+            {
+                // o mesmo player pode estar em mais de um servidor, trate isso para que não traga players repetidos
+
+                //var topPlayersByServer = await _dbContext.FortnitePlayers
+                //    .OrderByDescending(x => x.Vitorias)
+                //    .Take(5)
+                //    .ToListAsync();
+
+                var topPlayersByServer = await _dbContext.FortnitePlayers
+                    .GroupBy(x => x.DiscordServer)
+                    .SelectMany(group => group.OrderByDescending(player => player.Vitorias).Take(5))
+                    .ToListAsync();
+
+                if (topPlayersByServer.Count == 0)
+                {
+                    await RespondAsync("Não há jogadores acompanhados para mostrar ❌");
+                    return;
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine("**🏆 Top 5 Jogadores de todos os servidores 🏆**:");
+
+                foreach (var player in topPlayersByServer)
+                {
+                    sb.AppendLine($"🥇 {player.Nome} - {player.Vitorias} {(player.Vitorias == 1 ? "vitória" : "vitórias")}");
+                }
+
+                await RespondAsync(sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                await RespondAsync("Ocorreu um erro ao processar a solicitação ❌");
+            }
+        }
 
     }
 }

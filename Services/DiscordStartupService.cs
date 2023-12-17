@@ -1,5 +1,4 @@
-﻿using DiscNite.Util;
-using DiscNite.Utils;
+﻿using DiscNite.Utils;
 using Discord;
 using Discord.WebSocket;
 using Hangfire;

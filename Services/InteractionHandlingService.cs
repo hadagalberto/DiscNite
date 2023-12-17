@@ -1,5 +1,4 @@
 ﻿using DiscNite.Data;
-using DiscNite.Util;
 using DiscNite.Utils;
 using Discord;
 using Discord.Interactions;
@@ -50,9 +49,9 @@ namespace DiscNite.Services
 
             await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            var updater = new HangfireUpdater(_db, _fortniteApiService, _discord);
+            var updater = _services.GetService<HangfireUpdater>();
 
-            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), Cron.Minutely);
+            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), "*/30 * * * *");
             RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(21));
         }
 
