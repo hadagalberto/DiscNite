@@ -1,9 +1,12 @@
 ﻿using DiscNite.Data;
 using DiscNite.Services;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DiscNite.Utils
 {
@@ -14,13 +17,15 @@ namespace DiscNite.Utils
         private readonly FortniteApiService _fortniteApiService;
         private readonly DiscordSocketClient _discord;
         private readonly ILogger<HangfireUpdater> _logger;
+        private readonly IConfiguration _config;
 
-        public HangfireUpdater(AppDbContext dbContext, FortniteApiService fortniteApiService, DiscordSocketClient discord)
+        public HangfireUpdater(AppDbContext dbContext, FortniteApiService fortniteApiService, DiscordSocketClient discord, IConfiguration config)
         {
             _dbContext = dbContext;
             _fortniteApiService = fortniteApiService;
             _discord = discord;
             _logger = new Logger<HangfireUpdater>(new LoggerFactory());
+            _config = config;
         }
 
         public async Task UpdatePlayerStats()
@@ -29,6 +34,8 @@ namespace DiscNite.Utils
             var players = await _dbContext.FortnitePlayers
                 .Include(x => x.DiscordServer)
                 .ToListAsync();
+
+            await _discord.SetActivityAsync(new Game($"{players.Count()} players sendo trackeados", ActivityType.CustomStatus));
 
             foreach (var player in players)
             {
@@ -76,32 +83,52 @@ namespace DiscNite.Utils
                 _logger.LogInformation("Processando os 5 melhores jogadores por servidor...");
 
                 // Agrupa os jogadores por servidor e obtém os 5 melhores jogadores em cada servidor com base nas vitórias
-                var topPlayersByServer = await _dbContext.FortnitePlayers
-                    .GroupBy(x => x.DiscordServer)
-                    .SelectMany(group => group.OrderByDescending(player => player.Vitorias).Take(5))
+                var servers = await _dbContext.DiscordServers
                     .ToListAsync();
 
-                if (topPlayersByServer.Count == 0)
-                {
-                    return;
-                }
+                // download all guids from discord client
 
-                foreach (var serverGroup in topPlayersByServer.GroupBy(player => player.DiscordServer.IdDiscord))
+                foreach (var server in servers)
                 {
-                    var sb = new StringBuilder();
-                    sb.AppendLine($"**🏆 Top 5 Jogadores Hoje para o Servidor {serverGroup.Key} 🏆**:");
+                    var topPlayers = await _dbContext.FortnitePlayers
+                        .Where(x => x.DiscordServer.IdDiscord == server.IdDiscord)
+                        .OrderByDescending(x => x.Vitorias)
+                        .Take(5)
+                        .ToListAsync();
 
-                    foreach (var player in serverGroup)
+                    if (topPlayers.Count == 0)
                     {
+                        return;
+                    }
+
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"**🏆 Top 5 Jogadores Hoje para o Servidor {server.Nome} 🏆**:");
+
+                    foreach (var player in topPlayers)
+                    {
+                        var playerStats = Newtonsoft.Json.JsonConvert.DeserializeObject<Fortnite_API.Objects.V1.BrStatsV2V1>(player.PlayerStatsJSON);
+
                         sb.AppendLine($"🎮 **Jogador:** {player.Nome}");
                         sb.AppendLine($"🏅 **Vitórias:** {player.Vitorias} {(player.Vitorias == 1 ? "vitória" : "vitórias")}");
+                        sb.AppendLine($"🔫 **Kills:** {playerStats.Stats.All.Overall.Kills}");
+                        sb.AppendLine($"🔪 **K/D:** {playerStats.Stats.All.Overall.Kd}");
+                        sb.AppendLine($"🏹 **Level:** {playerStats.BattlePass.Level}");
                         sb.AppendLine("-------------------------------");
                     }
 
-                    // Supondo que você tenha um canal de texto dedicado para os melhores jogadores
-                    var topPlayersChannel = _discord.GetGuild(serverGroup.First().DiscordServer.IdDiscord).GetTextChannel(serverGroup.First().DiscordServer.IdDiscord);
+                    if(_discord.LoginState != LoginState.LoggedIn)
+                    {
+                        await _discord.LoginAsync(TokenType.Bot, _config["token"]);
+                    }
 
-                    await topPlayersChannel.SendMessageAsync(sb.ToString());
+                    var channel = await _discord.GetChannelAsync(server.IdTextChannel);
+
+                    if (channel == null)
+                    {
+                        return;
+                    }
+
+                    await (channel as IMessageChannel).SendMessageAsync(sb.ToString());
                 }
             }
             catch (Exception ex)

@@ -21,8 +21,14 @@ class Program
             .ConfigureServices(services =>
             {
                 // Use the Docker Compose SQL Server connection
-                var connectionString = "Server=sql-server,1433;Database=DiscNite;User Id=sa;Password=PedesWord123;TrustServerCertificate=True;";
+                var connectionString = "Server=localhost,1433;Database=DiscNite;User Id=sa;Password=PedesWord123;TrustServerCertificate=True;";
                 services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
+
+                var discordClient = new DiscordSocketClient(new DiscordSocketConfig
+                {
+                    AlwaysDownloadUsers = true,
+                    MessageCacheSize = 1000,
+                });
 
                 services.AddHangfire(config => {
                     config.UseSqlServerStorage(connectionString);
@@ -34,7 +40,7 @@ class Program
                     p.Queues = new[] { "default" };
                 });
                 services.AddSingleton<HangfireUpdater>();
-                services.AddSingleton<DiscordSocketClient>();
+                services.AddSingleton<DiscordSocketClient>(discordClient);
                 services.AddSingleton<InteractionService>();
                 services.AddHostedService<InteractionHandlingService>();
                 services.AddHostedService<DiscordStartupService>();

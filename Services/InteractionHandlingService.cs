@@ -42,6 +42,8 @@ namespace DiscNite.Services
 
             RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), "*/30 * * * *");
             RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(21));
+
+            await updater.ProcessTopFiveDaily();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
