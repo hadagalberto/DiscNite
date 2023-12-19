@@ -21,7 +21,7 @@ class Program
             .ConfigureServices(services =>
             {
                 // Use the Docker Compose SQL Server connection
-                var connectionString = "Server=localhost,1433;Database=DiscNite;User Id=sa;Password=PedesWord123;TrustServerCertificate=True;";
+                var connectionString = "Server=sql-server,1433;Database=DiscNite;User Id=sa;Password=PedesWord123;TrustServerCertificate=True;";
                 services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
 
                 var discordClient = new DiscordSocketClient(new DiscordSocketConfig
