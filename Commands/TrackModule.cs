@@ -338,11 +338,5 @@ namespace DiscNite.Commands
             }
         }
 
-        [SlashCommand("ping", "Pong!")]
-        public async Task PingAsync()
-        {
-            await RespondAsync("Pong!");
-        }
-
     }
 }
