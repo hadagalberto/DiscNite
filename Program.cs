@@ -27,7 +27,8 @@ class Program
                 var discordClient = new DiscordSocketClient(new DiscordSocketConfig
                 {
                     AlwaysDownloadUsers = true,
-                    MessageCacheSize = 1000,
+                    MessageCacheSize = 10000,
+                    LogLevel = Discord.LogSeverity.Verbose
                 });
 
                 services.AddHangfire(config => {

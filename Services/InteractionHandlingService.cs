@@ -38,7 +38,7 @@ namespace DiscNite.Services
             await _interactions.AddModuleAsync<UtilsModule>(_services);
             await _interactions.AddModuleAsync<ShopModule>(_services);
 
-            _discord.Ready += async () => await _interactions.RegisterCommandsGloballyAsync(true);
+            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync();
             _discord.InteractionCreated += OnInteractionAsync;
 
             var updater = _services.GetService<HangfireUpdater>();
