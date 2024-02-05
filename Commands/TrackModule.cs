@@ -311,13 +311,6 @@ namespace DiscNite.Commands
         {
             try
             {
-                // o mesmo player pode estar em mais de um servidor, trate isso para que não traga players repetidos
-
-                //var topPlayersByServer = await _dbContext.FortnitePlayers
-                //    .OrderByDescending(x => x.Vitorias)
-                //    .Take(5)
-                //    .ToListAsync();
-
                 var topPlayersByServer = await _dbContext.FortnitePlayers
                     .GroupBy(x => x.DiscordServer)
                     .SelectMany(group => group.OrderByDescending(player => player.Vitorias).Take(5))
@@ -343,6 +336,12 @@ namespace DiscNite.Commands
             {
                 await RespondAsync("Ocorreu um erro ao processar a solicitação ❌");
             }
+        }
+
+        [SlashCommand("ping", "Pong!")]
+        public async Task PingAsync()
+        {
+            await RespondAsync("Pong!");
         }
 
     }
