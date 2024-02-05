@@ -1,5 +1,6 @@
 ﻿using Fortnite_API;
 using Fortnite_API.Objects.V1;
+using Fortnite_API.Objects.V2;
 using Microsoft.Extensions.Configuration;
 
 namespace DiscNite.Services
@@ -39,6 +40,13 @@ namespace DiscNite.Services
             var stats = await _fortniteApiClient.V2.Stats.GetBrV2Async(requestParameters);
 
             return stats.Data;
+        }
+
+        public async Task<BrShopV2> GetShopAsync()
+        {
+            var shop = await _fortniteApiClient.V2.Shop.GetBrAsync(Fortnite_API.Objects.GameLanguage.PT_BR);
+
+            return shop.Data;
         }
 
     }
