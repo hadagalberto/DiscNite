@@ -1,4 +1,5 @@
-﻿using DiscNite.Utils;
+﻿using DiscNite.Commands;
+using DiscNite.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -33,10 +34,10 @@ namespace DiscNite.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync(true);
-            _discord.InteractionCreated += OnInteractionAsync;
+            await _interactions.AddModulesAsync(Assembly.GetAssembly(typeof(TrackModule)), _services);
 
-            await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            _discord.Ready += async () => await _interactions.RegisterCommandsGloballyAsync(true);
+            _discord.InteractionCreated += OnInteractionAsync;
 
             var updater = _services.GetService<HangfireUpdater>();
 
