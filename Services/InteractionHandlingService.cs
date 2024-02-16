@@ -34,9 +34,10 @@ namespace DiscNite.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _interactions.AddModuleAsync<TrackModule>(_services);
+            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync(true);
 
-            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync();
+            await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+
             _discord.InteractionCreated += OnInteractionAsync;
 
             var updater = _services.GetService<HangfireUpdater>();
