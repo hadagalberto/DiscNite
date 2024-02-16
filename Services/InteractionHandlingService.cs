@@ -35,8 +35,6 @@ namespace DiscNite.Services
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _interactions.AddModuleAsync<TrackModule>(_services);
-            await _interactions.AddModuleAsync<UtilsModule>(_services);
-            await _interactions.AddModuleAsync<ShopModule>(_services);
 
             _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync();
             _discord.InteractionCreated += OnInteractionAsync;
