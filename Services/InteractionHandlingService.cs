@@ -34,7 +34,7 @@ namespace DiscNite.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync(true);
+            _discord.Ready += () => _interactions.RegisterCommandsGloballyAsync();
 
             await _interactions.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
@@ -43,7 +43,7 @@ namespace DiscNite.Services
             var updater = _services.GetService<HangfireUpdater>();
 
             RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), "*/30 * * * *");
-            RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(21));
+            RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(23));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

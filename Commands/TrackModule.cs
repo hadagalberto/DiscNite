@@ -95,22 +95,13 @@ namespace DiscNite.Commands
         [SlashCommand("untrack", "Deixa de acompanhar a evolução do player")]
         public async Task UntrackUser(string player)
         {
-            var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player);
-
-            if (stats == null)
-            {
-                await RespondAsync("Não foi possível encontrar o player ❌");
-                return;
-            }
-
             var guidId = this.Context.Guild.Id;
-            var guidPlayer = stats.Account.Id;
 
-            var playerInDb = await _dbContext.FortnitePlayers.FirstOrDefaultAsync(x => x.DiscordServer.IdDiscord == guidId && x.IdDiscord == guidPlayer);
+            var playerInDb = await _dbContext.FortnitePlayers.FirstOrDefaultAsync(x => x.DiscordServer.IdDiscord == guidId && x.Nome == player);
 
             if (playerInDb == null)
             {
-                await RespondAsync($"Não estamos acompanhando o player {stats.Account.Name} ❌");
+                await RespondAsync($"Não estamos acompanhando o player {player} ❌");
                 return;
             }
 
@@ -125,7 +116,7 @@ namespace DiscNite.Commands
                 return;
             }
 
-            await RespondAsync($"Não estaremos mais acompanhando a evolução do player {stats.Account.Name} 😢");
+            await RespondAsync($"Não estaremos mais acompanhando a evolução do player {player} 😢");
         }
 
         [SlashCommand("list", "Lista os players que estamos acompanhando")]
