@@ -16,6 +16,11 @@ namespace DiscNite.Services
             _fortniteApiClient = new FortniteApiClient(apiKey);
         }
 
+        public FortniteApiService(string apiKey)
+        {
+            _fortniteApiClient = new FortniteApiClient(apiKey);
+        }
+
         public async Task<BrStatsV2V1> GetPlayerStaticsCurrentSeasonAsync(string player)
         {
             var requestParameters = new Action<Fortnite_API.Objects.V1.BrStatsV2V1RequestProperties>(x =>

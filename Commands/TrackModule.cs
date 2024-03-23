@@ -2,7 +2,9 @@
 using DiscNite.Services;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Fortnite_API.Objects.V1;
+using Fortnite_API.Objects.V2;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -13,6 +15,8 @@ namespace DiscNite.Commands
 
         private readonly FortniteApiService _fortniteApiService;
         private readonly AppDbContext _dbContext;
+        private BrShopV2 BrShop;
+        private Dictionary<ulong, int> TrackedShopUser = new Dictionary<ulong, int>();
 
         public TrackModule(FortniteApiService fortniteApiService, AppDbContext dbContext)
         {
@@ -333,19 +337,44 @@ namespace DiscNite.Commands
         [SlashCommand("shop", "Mostra a loja atual do Fortnite")]
         public async Task ShopAsync()
         {
-            var shop = await _fortniteApiService.GetShopAsync();
+            if (BrShop == null)
+            {
+                await RespondAsync("Aguarde um momento enquanto carregamos a loja atual do Fortnite ⏳");
 
-            var itensToShow = shop.Daily.Entries.Take(5);
+                await Task.Run(async () =>
+                {
+                    BrShop = await _fortniteApiService.GetShopAsync();
+                });
+                return;
+            }
+
+            if (BrShop.Date.Date != DateTime.Now.Date)
+            {
+                await RespondAsync("Aguarde um momento enquanto carregamos a loja atual do Fortnite ⏳");
+
+                await Task.Run(async () =>
+                {
+                    BrShop = await _fortniteApiService.GetShopAsync();
+                });
+                return;
+            }
+
+            var shop = BrShop;
+
+            var itemToShow = shop.Featured.Entries.Take(1).FirstOrDefault();
+
+            // update TrackedShopUser dictionary even if the user is not in the dictionary
+            TrackedShopUser[this.Context.User.Id] = 1;
 
             var builder = new ComponentBuilder()
-                .WithButton("Próxima página", "next", ButtonStyle.Primary)
-                .WithButton("Página anterior", "previous", ButtonStyle.Primary);
+                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
+                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
 
             var embed = new EmbedBuilder()
                 .WithTitle("Loja do Fortnite")
-                .WithDescription("Aqui estão os itens da loja atual do Fortnite")
+                .WithDescription(itemToShow.Bundle.Name)
                 .WithColor(Color.Blue)
-                .WithImageUrl(itensToShow.FirstOrDefault().Items.FirstOrDefault().Images.Featured.ToString())
+                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
                 .WithFooter("Loja atual do Fortnite")
                 .Build();
 
@@ -373,7 +402,7 @@ namespace DiscNite.Commands
 
             var embed = new EmbedBuilder()
                 .WithTitle("DiscNite")
-                .WithDescription("DiscNite é um bot para o Discord que fornece informações sobre o Fortnite")
+                .WithDescription(description)
                 .WithColor(Color.Blue)
                 .WithFooter("DiscNite")
                 .Build();
@@ -397,6 +426,65 @@ namespace DiscNite.Commands
 
             await RespondAsync(embeds: new[] { embed }, components: builder.Build());
         }
+
+        [ComponentInteraction("nextShop")]
+        public async Task NextShopAsync()
+        {
+            var shop = BrShop;
+
+            var skip = TrackedShopUser[this.Context.User.Id];
+            
+            var itemToShow = shop.Featured.Entries.Skip(skip).Take(1).FirstOrDefault();
+
+            TrackedShopUser[this.Context.User.Id] = skip + 1;
+
+            var builder = new ComponentBuilder()
+                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
+                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
+
+            var embed = new EmbedBuilder()
+                .WithTitle("Loja do Fortnite")
+                .WithDescription(itemToShow.Bundle.Name)
+                .WithColor(Color.Blue)
+                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                .WithFooter("Loja atual do Fortnite")
+                .Build();
+
+            var response = (SocketMessageComponent)this.Context.Interaction;
+
+            await response.UpdateAsync(msg => msg.Embed = embed);
+        }
+
+        [ComponentInteraction("previousShop")]
+        public async Task PreviousShopAsync()
+        {
+            var shop = BrShop;
+
+            var skip = TrackedShopUser[this.Context.User.Id];
+
+            var itemToShow = shop.Featured.Entries.Skip(skip).Take(1).FirstOrDefault();
+
+            TrackedShopUser[this.Context.User.Id] = skip - 1;
+
+            var builder = new ComponentBuilder()
+                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
+                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
+
+            var embed = new EmbedBuilder()
+                .WithTitle("Loja do Fortnite")
+                .WithDescription(itemToShow.Bundle.Name)
+                .WithColor(Color.Blue)
+                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                .WithFooter("Loja atual do Fortnite")
+                .Build();
+
+            var response = (SocketMessageComponent)this.Context.Interaction;
+
+            await response.UpdateAsync(msg => msg.Embed = embed);
+        }
+
+
+
 
     }
 }
