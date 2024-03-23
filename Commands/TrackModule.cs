@@ -15,8 +15,8 @@ namespace DiscNite.Commands
 
         private readonly FortniteApiService _fortniteApiService;
         private readonly AppDbContext _dbContext;
-        private BrShopV2 BrShop;
-        private Dictionary<ulong, int> TrackedShopUser = new Dictionary<ulong, int>();
+        private static BrShopV2 BrShop;
+        private static Dictionary<ulong, int> TrackedShopUser = new Dictionary<ulong, int>();
 
         public TrackModule(FortniteApiService fortniteApiService, AppDbContext dbContext)
         {
