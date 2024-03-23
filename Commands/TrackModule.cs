@@ -363,22 +363,60 @@ namespace DiscNite.Commands
 
             var itemToShow = shop.Featured.Entries.Take(1).FirstOrDefault();
 
-            // update TrackedShopUser dictionary even if the user is not in the dictionary
             TrackedShopUser[this.Context.User.Id] = 1;
 
+            var bundle = itemToShow.Bundle;
+
             var builder = new ComponentBuilder()
-                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
-                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
+                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary)
+                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary);
 
-            var embed = new EmbedBuilder()
-                .WithTitle("Loja do Fortnite")
-                .WithDescription(itemToShow.Bundle.Name)
-                .WithColor(Color.Blue)
-                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
-                .WithFooter("Loja atual do Fortnite")
-                .Build();
+            if (bundle != null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Loja do Fortnite")
+                    .WithDescription(itemToShow.Bundle.Name + " | " + itemToShow.FinalPrice + "V-Bucks")
+                    .WithColor(Color.Blue)
+                    .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                    .WithFooter("DiscNite")
+                    .Build();
 
-            await RespondAsync(embeds: new[] { embed }, components: builder.Build());
+                await RespondAsync(embeds: new[] { embed }, components: builder.Build());
+            }
+            else
+            {
+                var items = itemToShow.Items.ToList();
+
+                List<Embed> embeds = new List<Embed>();
+
+                var item = items.FirstOrDefault();
+                var embed = new EmbedBuilder()
+                        .WithTitle("Loja do Fortnite")
+                        .WithDescription(item.Name + " | " + itemToShow.FinalPrice + " V-Bucks")
+                        .WithImageUrl(item.Images.Featured?.AbsoluteUri ?? item.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? item.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                embeds.Add(embed);
+
+                foreach (var itemE in items.Skip(1))
+                {
+                    var embedE = new EmbedBuilder()
+                        .WithImageUrl(itemE.Images.Featured?.AbsoluteUri ?? itemE.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? itemE.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                    embeds.Add(embedE);
+                }
+
+                var response = (SocketMessageComponent)this.Context.Interaction;
+
+                await response.UpdateAsync(msg => msg.Embeds = embeds.ToArray());
+
+            }
+
         }
 
         [SlashCommand("ping", "Pong!")]
@@ -427,32 +465,147 @@ namespace DiscNite.Commands
             await RespondAsync(embeds: new[] { embed }, components: builder.Build());
         }
 
+        [SlashCommand("itemshop", "Busca um item na loja pelo nome")]
+        public async Task ItemShop(string item)
+        {
+            var shop = BrShop;
+
+            if (shop == null)
+            {
+                await RespondAsync("Aguarde um momento enquanto carregamos a loja atual do Fortnite ⏳");
+
+                await Task.Run(async () =>
+                {
+                    BrShop = await _fortniteApiService.GetShopAsync();
+                });
+                return;
+            }
+
+            if (shop.Date.Date != DateTime.Now.Date)
+            {
+                await RespondAsync("Aguarde um momento enquanto carregamos a loja atual do Fortnite ⏳");
+
+                await Task.Run(async () =>
+                {
+                    BrShop = await _fortniteApiService.GetShopAsync();
+                });
+                return;
+            }
+
+            var itemToShow = shop.Featured.Entries.FirstOrDefault(x => x.Bundle?.Name.Contains(item) == true || x.Items.Any(y => y.Name.Contains(item)));
+
+            if (itemToShow == null)
+            {
+                await RespondAsync("Não foi possível encontrar o item na loja ❌");
+                return;
+            }
+
+            var bundle = itemToShow.Bundle;
+
+            if (bundle != null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Loja do Fortnite")
+                    .WithDescription(itemToShow.Bundle.Name + " | " + itemToShow.FinalPrice + "V-Bucks")
+                    .WithColor(Color.Blue)
+                    .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                    .WithFooter("DiscNite")
+                    .Build();
+
+                await RespondAsync(embeds: new[] {embed});
+            }
+            else
+            {
+                var items = itemToShow.Items.ToList();
+
+                List<Embed> embeds = new List<Embed>();
+
+                var itemE = items.FirstOrDefault();
+                var embed = new EmbedBuilder()
+                        .WithTitle("Loja do Fortnite")
+                        .WithDescription(itemE.Name + " | " + itemToShow.FinalPrice + " V-Bucks")
+                        .WithImageUrl(itemE.Images.Featured?.AbsoluteUri ?? itemE.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? itemE.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                embeds.Add(embed);
+
+                foreach (var itemEE in items.Skip(1))
+                {
+                    var embedE = new EmbedBuilder()
+                        .WithImageUrl(itemEE.Images.Featured?.AbsoluteUri ?? itemEE.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? itemEE.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                    embeds.Add(embedE);
+                }
+
+                await RespondAsync(embeds: embeds.ToArray());
+            }
+        }
+
         [ComponentInteraction("nextShop")]
         public async Task NextShopAsync()
         {
             var shop = BrShop;
 
-            var skip = TrackedShopUser[this.Context.User.Id];
+            var skip = TrackedShopUser.ContainsKey(this.Context.User.Id) ? TrackedShopUser[this.Context.User.Id] : 0;
             
             var itemToShow = shop.Featured.Entries.Skip(skip).Take(1).FirstOrDefault();
 
             TrackedShopUser[this.Context.User.Id] = skip + 1;
 
-            var builder = new ComponentBuilder()
-                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
-                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
+            var bundle = itemToShow.Bundle;
 
-            var embed = new EmbedBuilder()
-                .WithTitle("Loja do Fortnite")
-                .WithDescription(itemToShow.Bundle.Name)
-                .WithColor(Color.Blue)
-                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
-                .WithFooter("Loja atual do Fortnite")
-                .Build();
+            if (bundle != null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Loja do Fortnite")
+                    .WithDescription(itemToShow.Bundle.Name + " | " + itemToShow.FinalPrice + "V-Bucks")
+                    .WithColor(Color.Blue)
+                    .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                    .WithFooter("DiscNite")
+                    .Build();
 
-            var response = (SocketMessageComponent)this.Context.Interaction;
+                var response = (SocketMessageComponent)this.Context.Interaction;
 
-            await response.UpdateAsync(msg => msg.Embed = embed);
+                await response.UpdateAsync(msg => msg.Embed = embed);
+            } 
+            else
+            {
+                var items = itemToShow.Items.ToList();
+
+                List<Embed> embeds = new List<Embed>();
+
+                var item = items.FirstOrDefault();
+                var embed = new EmbedBuilder()
+                        .WithTitle("Loja do Fortnite")
+                        .WithDescription(item.Name + " | " + itemToShow.FinalPrice + " V-Bucks")
+                        .WithImageUrl(item.Images.Featured?.AbsoluteUri ?? item.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? item.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                embeds.Add(embed);
+
+                foreach (var itemE in items.Skip(1))
+                {
+                    var embedE = new EmbedBuilder()
+                        .WithImageUrl(itemE.Images.Featured?.AbsoluteUri ?? itemE.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? itemE.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                    embeds.Add(embedE);
+                }
+
+                var response = (SocketMessageComponent)this.Context.Interaction;
+
+                await response.UpdateAsync(msg => msg.Embeds = embeds.ToArray());
+
+            }
         }
 
         [ComponentInteraction("previousShop")]
@@ -460,31 +613,69 @@ namespace DiscNite.Commands
         {
             var shop = BrShop;
 
-            var skip = TrackedShopUser[this.Context.User.Id];
+            var skip = TrackedShopUser.ContainsKey(this.Context.User.Id) ? TrackedShopUser[this.Context.User.Id] : 0;
 
-            var itemToShow = shop.Featured.Entries.Skip(skip).Take(1).FirstOrDefault();
+            if (skip < 0)
+            {
+                await RespondAsync("Não há mais itens para mostrar ❌");
+                return;
+            }
 
             TrackedShopUser[this.Context.User.Id] = skip - 1;
 
-            var builder = new ComponentBuilder()
-                .WithButton("Próxima página", "nextShop", ButtonStyle.Primary)
-                .WithButton("Página anterior", "previousShop", ButtonStyle.Primary);
+            var itemToShow = shop.Featured.Entries.Skip(skip).Take(1).FirstOrDefault();
 
-            var embed = new EmbedBuilder()
-                .WithTitle("Loja do Fortnite")
-                .WithDescription(itemToShow.Bundle.Name)
-                .WithColor(Color.Blue)
-                .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
-                .WithFooter("Loja atual do Fortnite")
-                .Build();
 
-            var response = (SocketMessageComponent)this.Context.Interaction;
+            var bundle = itemToShow.Bundle;
 
-            await response.UpdateAsync(msg => msg.Embed = embed);
+            if (bundle != null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Loja do Fortnite")
+                    .WithDescription(itemToShow.Bundle.Name + " | " + itemToShow.FinalPrice + "V-Bucks")
+                    .WithColor(Color.Blue)
+                    .WithImageUrl(itemToShow.Bundle.Image.AbsoluteUri)
+                    .WithFooter("DiscNite")
+                    .Build();
+
+                var response = (SocketMessageComponent)this.Context.Interaction;
+
+                await response.UpdateAsync(msg => msg.Embed = embed);
+            }
+            else
+            {
+                var items = itemToShow.Items.ToList();
+
+                List<Embed> embeds = new List<Embed>();
+
+                var item = items.FirstOrDefault();
+                var embed = new EmbedBuilder()
+                        .WithTitle("Loja do Fortnite")
+                        .WithDescription(item.Name + " | " + itemToShow.FinalPrice + " V-Bucks")
+                        .WithImageUrl(item.Images.Featured?.AbsoluteUri ?? item.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? item.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                embeds.Add(embed);
+
+                foreach (var itemE in items.Skip(1))
+                {
+                    var embedE = new EmbedBuilder()
+                        .WithImageUrl(itemE.Images.Featured?.AbsoluteUri ?? itemE.Images.Other?.FirstOrDefault().Value.AbsoluteUri ?? itemE.Images.Icon?.AbsoluteUri)
+                        .WithColor(Color.Blue)
+                        .WithFooter("DiscNite")
+                        .Build();
+
+                    embeds.Add(embedE);
+                }
+
+                var response = (SocketMessageComponent)this.Context.Interaction;
+
+                await response.UpdateAsync(msg => msg.Embeds = embeds.ToArray());
+
+            }
         }
-
-
-
 
     }
 }
