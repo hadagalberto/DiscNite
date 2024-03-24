@@ -2,9 +2,11 @@
 using DiscNite.Services;
 using Discord;
 using Discord.WebSocket;
+using Fortnite_API.Objects.V1;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -35,7 +37,7 @@ namespace DiscNite.Utils
                 .Include(x => x.DiscordServer)
                 .ToListAsync();
 
-            await _discord.SetActivityAsync(new Game($"{players.Count()} players sendo trackeados", ActivityType.CustomStatus));
+            await _discord.SetActivityAsync(new Game($"Com {players.Count()} players", ActivityType.Playing));
 
             foreach (var player in players)
             {
@@ -47,8 +49,17 @@ namespace DiscNite.Utils
         {
             try
             {
-                var playerName = player.Nome.Clone().ToString();
-                var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(playerName);
+                BrStatsV2V1 stats = null;
+                var playerId = player.IdDiscord.Clone().ToString();
+                if (playerId.IsNullOrEmpty())
+                {
+                    var playerName = player.Nome.Clone().ToString();
+                    stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(playerName);
+                }
+                else
+                {
+                    stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonByPlayerIdAsync(playerId);
+                }
 
                 if (stats == null)
                 {
@@ -66,6 +77,7 @@ namespace DiscNite.Utils
                     await _discord.GetGuild(player.DiscordServer.IdDiscord).GetTextChannel(player.DiscordServer.IdTextChannel).SendMessageAsync(sb.ToString());
                 }
 
+                player.Nome = stats.Account.Name;
                 player.PlayerStatsJSON = Newtonsoft.Json.JsonConvert.SerializeObject(stats);
 
                 await _dbContext.SaveChangesAsync();
