@@ -161,30 +161,32 @@ namespace DiscNite.Commands
                 return;
             }
 
-            var response = new StringBuilder();
+            await RespondAsync("**Atualizando os dados dos players acompanhados:**");
 
-            response.AppendLine("**Atualizando os dados dos players acompanhados:**");
-
-            foreach (var player in playersInDb)
+            await Task.Run(async () =>
             {
-                var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player.IdDiscord);
-
-                if (stats == null)
+                foreach (var player in playersInDb)
                 {
-                    response.AppendLine($"Não foi possível encontrar o player {player.Nome} 😢");
-                    continue;
+                    var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonByPlayerIdAsync(player.IdDiscord);
+
+                    if (stats == null)
+                    {
+                        continue;
+                    }
+
+                    player.Nome = stats.Account.Name;
+                    player.DateUpdated = stats.Stats.All.Overall.LastModified;
+
+                    _dbContext.FortnitePlayers.Update(player);
+                    await _dbContext.SaveChangesAsync();
                 }
 
-                player.Nome = stats.Account.Name;
-                player.DateUpdated = stats.Stats.All.Overall.LastModified;
+                var channel = this.Context.Guild.GetTextChannel(playersInDb.FirstOrDefault().DiscordServer.IdTextChannel);
 
-                _dbContext.FortnitePlayers.Update(player);
-                await _dbContext.SaveChangesAsync();
+                await channel.SendMessageAsync("Dados atualizados com sucesso! 🎉");
+            });
+            
 
-                response.AppendLine($"- {player.Nome}");
-            }
-
-            await RespondAsync(response.ToString());
         }
 
         [SlashCommand("stats", "Mostra as estatísticas do player")]
