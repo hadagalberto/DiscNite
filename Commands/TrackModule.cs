@@ -548,6 +548,18 @@ namespace DiscNite.Commands
             }
         }
 
+        [SlashCommand("playersinfo", "Mostra as informações dos players trackeados")]
+        public async Task PlayersInfo()
+        {
+            var playersCount = await _dbContext.FortnitePlayers.CountAsync();
+
+            var serversCount = await _dbContext.DiscordServers.CountAsync();
+
+            var response = $"Há um total de {playersCount} players sendo trackeados em {serversCount} servidores";
+
+            await RespondAsync(response);
+        }
+
         [ComponentInteraction("nextShop")]
         public async Task NextShopAsync()
         {
