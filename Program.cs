@@ -1,6 +1,7 @@
 ﻿using DiscNite.Data;
 using DiscNite.Services;
 using DiscNite.Utils;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Hangfire;
@@ -28,7 +29,8 @@ class Program
                 {
                     AlwaysDownloadUsers = true,
                     MessageCacheSize = 10000,
-                    LogLevel = Discord.LogSeverity.Verbose
+                    LogLevel = Discord.LogSeverity.Verbose,
+                    GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.Guilds
                 });
 
                 services.AddHangfire(config => {
