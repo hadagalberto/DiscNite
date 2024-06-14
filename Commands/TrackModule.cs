@@ -7,6 +7,7 @@ using Fortnite_API.Objects.V1;
 using Fortnite_API.Objects.V2;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using DiscNite.AutoCompleteHandlers;
 
 namespace DiscNite.Commands
 {
@@ -190,7 +191,7 @@ namespace DiscNite.Commands
         }
 
         [SlashCommand("stats", "Mostra as estatísticas do player")]
-        public async Task ShowStats(string player)
+        public async Task ShowStats([Summary("player"), Autocomplete(typeof(FortnitePlayerHandler))]string player)
         {
             var seasonStatsJSON = _dbContext.FortnitePlayers.FirstOrDefault(x => x.Nome == player).PlayerStatsJSON;
             var lifetimeStats = await _fortniteApiService.GetPlayerStaticsAllTimeAsync(player);
