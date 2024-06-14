@@ -37,7 +37,10 @@ namespace DiscNite.Utils
                 .Include(x => x.DiscordServer)
                 .ToListAsync();
 
-            await _discord.SetActivityAsync(new Game($"Com {players.Count()} players", ActivityType.Playing));
+            var servers = await _dbContext.DiscordServers
+                .CountAsync();
+
+            await _discord.SetActivityAsync(new Game($"Trackeando {players.Count} players em {servers} servidores", ActivityType.CustomStatus));
 
             foreach (var player in players)
             {

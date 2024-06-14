@@ -43,8 +43,8 @@ class Program
                     p.Queues = new[] { "default" };
                 });
                 services.AddSingleton<HangfireUpdater>();
-                services.AddSingleton<DiscordSocketClient>(discordClient);
-                services.AddSingleton<InteractionService>();
+                services.AddSingleton(discordClient);
+                services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
                 services.AddHostedService<InteractionHandlingService>();
                 services.AddHostedService<DiscordStartupService>();
                 services.AddSingleton<FortniteApiService>();

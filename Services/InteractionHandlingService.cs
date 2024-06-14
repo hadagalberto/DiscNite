@@ -42,6 +42,7 @@ namespace DiscNite.Services
 
             var updater = _services.GetService<HangfireUpdater>();
 
+            BackgroundJob.Enqueue(() => updater.UpdatePlayerStats());
             RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), "*/30 * * * *");
             RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(23));
         }
