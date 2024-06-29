@@ -141,48 +141,6 @@ namespace DiscNite.Commands
             await RespondAsync(sb.ToString());
         }
 
-        // fortinte method:
-        /*
-         [SlashCommand("fn-update", "Atualiza os dados dos players que estamos acompanhando")]
-           public async Task UpdateTrackedUsers()
-           {
-               var guidId = this.Context.Guild.Id;
-           
-               var playersInDb = await _dbContext.FortnitePlayers.Where(x => x.DiscordServer.IdDiscord == guidId).ToListAsync();
-           
-               if (playersInDb == null || playersInDb.Count == 0)
-               {
-                   await RespondAsync("Não estamos acompanhando nenhum player 😢");
-                   return;
-               }
-           
-               await RespondAsync("**Atualizando os dados dos players acompanhados:**");
-           
-               await Task.Run(async () =>
-               {
-                   foreach (var player in playersInDb)
-                   {
-                       var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonByPlayerIdAsync(player.IdDiscord);
-           
-                       if (stats == null)
-                       {
-                           continue;
-                       }
-           
-                       player.Nome = stats.Account.Name;
-                       player.DateUpdated = stats.Stats.All.Overall.LastModified;
-           
-                       _dbContext.FortnitePlayers.Update(player);
-                       await _dbContext.SaveChangesAsync();
-                   }
-           
-                   var channel = this.Context.Guild.GetTextChannel(playersInDb.FirstOrDefault().DiscordServer.IdTextChannel);
-           
-                   await channel.SendMessageAsync("Dados atualizados com sucesso! 🎉");
-               });
-           }
-         */
-
         [SlashCommand("pg-update", "Atualiza os dados dos players que estamos acompanhando")]
         public async Task UpdateTrackedUsers()
         {
@@ -225,67 +183,6 @@ namespace DiscNite.Commands
 
             await RespondAsync("**Atualizando os dados dos players acompanhados:**");
         }
-
-        /*
-         [SlashCommand("fn-stats", "Mostra as estatísticas do player")]
-           public async Task ShowStats([Summary("player"), Autocomplete(typeof(FortnitePlayerHandler))]string player)
-           {
-               var seasonStatsJSON = _dbContext.FortnitePlayers.FirstOrDefault(x => x.Nome == player).PlayerStatsJSON;
-               var lifetimeStats = await _fortniteApiService.GetPlayerStaticsAllTimeAsync(player);
-           
-               BrStatsV2V1 seasonStats;
-           
-               if (seasonStatsJSON == null || seasonStatsJSON == string.Empty)
-               {
-                   seasonStats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player);
-               }
-               else
-               {
-                   seasonStats = Newtonsoft.Json.JsonConvert.DeserializeObject<BrStatsV2V1>(seasonStatsJSON);
-               }
-           
-               var response = new StringBuilder();
-           
-               response.AppendLine($"**{seasonStats.Account.Name}**");
-           
-               if (seasonStats == null)
-               {
-                   response.AppendLine("❌ Não foi possível encontrar dados do player na **Season Atual**");
-               }
-               else
-               {
-                   response.AppendLine("**Season Atual**");
-                   response.AppendLine($"🎮 Partidas: {seasonStats.Stats.All.Overall.Matches}");
-                   response.AppendLine($"🌟 **Nível:** {seasonStats.BattlePass.Level}");
-                   response.AppendLine($"🏆 Vitórias: {seasonStats.Stats.All.Overall.Wins}");
-                   response.AppendLine($"📊 W/L: {seasonStats.Stats.All.Overall.WinRate}%");
-                   response.AppendLine($"💀 Kills: {seasonStats.Stats.All.Overall.Kills}");
-                   response.AppendLine($"💔 Mortes: {seasonStats.Stats.All.Overall.Deaths}");
-                   response.AppendLine($"🔪 K/D: {seasonStats.Stats.All.Overall.Kd}");
-                   response.AppendLine($"🎖️ Pontuação acumulada: {seasonStats.Stats.All.Overall.Score}");
-                   response.AppendLine("");
-               }
-               
-               if (lifetimeStats == null)
-               {
-                   response.AppendLine("❌ Não foi possível encontrar dados do player fora dessa season");
-               }
-               else
-               {
-                   response.AppendLine("**Geral**");
-                   response.AppendLine($"🎮 Partidas: {lifetimeStats.Stats.All.Overall.Matches}");
-                   response.AppendLine($"🏆 Vitórias: {lifetimeStats.Stats.All.Overall.Wins}");
-                   response.AppendLine($"📊 W/L: {lifetimeStats.Stats.All.Overall.WinRate}%");
-                   response.AppendLine($"💀 Kills: {lifetimeStats.Stats.All.Overall.Kills}");
-                   response.AppendLine($"💔 Mortes: {lifetimeStats.Stats.All.Overall.Deaths}");
-                   response.AppendLine($"🔪 K/D: {lifetimeStats.Stats.All.Overall.Kd}");
-                   response.AppendLine($"🎖️ Pontuação acumulada: {lifetimeStats.Stats.All.Overall.Score}");
-               }
-               
-           
-               await RespondAsync(response.ToString());
-           }
-         */
 
         [SlashCommand("pg-stats", "Mostra as estatísticas do player")]
         public async Task Stats([Summary("player")] string player)
@@ -352,9 +249,9 @@ namespace DiscNite.Commands
                                     + stats.GameModeStats.DuoFPP.Losses
                                     + stats.GameModeStats.SquadFPP.Losses;
 
-                var totalKDRatio = totalDeaths == 0 ? totalKills : totalKills / totalDeaths;
+                var totalKDRatio = totalDeaths == 0 ? totalKills : (double)totalKills / totalDeaths;
 
-                var totalWLRation = totalLoss == 0 ? totalVitorias : totalVitorias / totalLoss;
+                var totalWLRation = totalLoss == 0 ? totalVitorias : (double)totalVitorias / totalLoss;
 
                 response.AppendLine("**Season Atual**");
                 response.AppendLine($"🎮 Partidas: {totalPartidas}");
@@ -415,9 +312,9 @@ namespace DiscNite.Commands
                                     + lifetimeStats.GameModeStats.DuoFPP.Losses
                                     + lifetimeStats.GameModeStats.SquadFPP.Losses;
 
-                var totalKDRatio = totalDeaths == 0 ? totalKills : totalKills / totalDeaths;
+                var totalKDRatio = totalDeaths == 0 ? totalKills : (double)totalKills / totalDeaths;
 
-                var totalWLRation = totalLoss == 0 ? totalVitorias : totalVitorias / totalLoss;
+                var totalWLRation = totalLoss == 0 ? totalVitorias : (double)totalVitorias / totalLoss;
 
                 response.AppendLine("**Geral**");
                 response.AppendLine($"🎮 Partidas: {totalPartidas}");
