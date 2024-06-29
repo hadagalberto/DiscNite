@@ -16,6 +16,7 @@ namespace DiscNite.Models
         public ulong IdTextChannel { get; set; }
 
         public virtual ICollection<FortnitePlayer> FortnitePlayers { get; set; }
+        public virtual ICollection<PUBGPlayer> PUBGPlayers { get; set; }
 
     }
 }

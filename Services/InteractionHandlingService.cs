@@ -42,9 +42,9 @@ namespace DiscNite.Services
 
             var updater = _services.GetService<HangfireUpdater>();
 
-            BackgroundJob.Enqueue(() => updater.UpdatePlayerStats());
-            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), "*/30 * * * *");
-            RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessTopFiveDaily(), Cron.Daily(23));
+            BackgroundJob.Enqueue(() => updater.UpdateFortnitePlayerStats());
+            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdateFortnitePlayerStats(), "*/30 * * * *");
+            RecurringJob.AddOrUpdate("PlayerTopFive", () => updater.ProcessFortniteTopFiveDaily(), Cron.Daily(23));
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

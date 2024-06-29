@@ -30,7 +30,7 @@ namespace DiscNite.Utils
             _config = config;
         }
 
-        public async Task UpdatePlayerStats()
+        public async Task UpdateFortnitePlayerStats()
         {
             _logger.LogInformation("Updating player stats...");
             var players = await _dbContext.FortnitePlayers
@@ -44,11 +44,11 @@ namespace DiscNite.Utils
 
             foreach (var player in players)
             {
-                await ProcessPlayerUpdate(player);
+                await ProcessFortnitePlayerUpdate(player);
             }
         }
 
-        private async Task ProcessPlayerUpdate(Models.FortnitePlayer player)
+        private async Task ProcessFortnitePlayerUpdate(Models.FortnitePlayer player)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace DiscNite.Utils
             }
         }
 
-        public async Task ProcessTopFiveDaily()
+        public async Task ProcessFortniteTopFiveDaily()
         {
             try
             {

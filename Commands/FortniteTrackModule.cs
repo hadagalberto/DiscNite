@@ -1,4 +1,5 @@
-﻿using DiscNite.Data;
+﻿using System.ComponentModel;
+using DiscNite.Data;
 using DiscNite.Services;
 using Discord;
 using Discord.Interactions;
@@ -11,7 +12,9 @@ using DiscNite.AutoCompleteHandlers;
 
 namespace DiscNite.Commands
 {
-    public class TrackModule : InteractionModuleBase<SocketInteractionContext>
+
+    [Description("Comandos para acompanhar a evolução dos players de Fortnite")]
+    public class FortniteTrackModule : InteractionModuleBase<SocketInteractionContext>
     {
 
         private readonly FortniteApiService _fortniteApiService;
@@ -19,14 +22,14 @@ namespace DiscNite.Commands
         private static BrShopV2 BrShop;
         private static Dictionary<ulong, int> TrackedShopUser = new Dictionary<ulong, int>();
 
-        public TrackModule(FortniteApiService fortniteApiService, AppDbContext dbContext)
+        public FortniteTrackModule(FortniteApiService fortniteApiService, AppDbContext dbContext)
         {
             _fortniteApiService = fortniteApiService;
             _dbContext = dbContext;
         }
 
 
-        [SlashCommand("track", "Acompanha a evolução do player")]
+        [SlashCommand("fn-track", "Acompanha a evolução do player")]
         public async Task TrackUser(string player)
         {
             var stats = await _fortniteApiService.GetPlayerStaticsCurrentSeasonAsync(player);
@@ -97,7 +100,7 @@ namespace DiscNite.Commands
             await RespondAsync(response.ToString());
         }
 
-        [SlashCommand("untrack", "Deixa de acompanhar a evolução do player")]
+        [SlashCommand("fn-untrack", "Deixa de acompanhar a evolução do player")]
         public async Task UntrackUser(string player)
         {
             var guidId = this.Context.Guild.Id;
@@ -124,7 +127,7 @@ namespace DiscNite.Commands
             await RespondAsync($"Não estaremos mais acompanhando a evolução do player {player} 😢");
         }
 
-        [SlashCommand("list", "Lista os players que estamos acompanhando")]
+        [SlashCommand("fn-list", "Lista os players que estamos acompanhando")]
         public async Task ListTrackedUsers()
         {
             var guidId = this.Context.Guild.Id;
@@ -149,7 +152,7 @@ namespace DiscNite.Commands
             await RespondAsync(response.ToString());
         }
 
-        [SlashCommand("update", "Atualiza os dados dos players que estamos acompanhando")]
+        [SlashCommand("fn-update", "Atualiza os dados dos players que estamos acompanhando")]
         public async Task UpdateTrackedUsers()
         {
             var guidId = this.Context.Guild.Id;
@@ -186,11 +189,9 @@ namespace DiscNite.Commands
 
                 await channel.SendMessageAsync("Dados atualizados com sucesso! 🎉");
             });
-            
-
         }
 
-        [SlashCommand("stats", "Mostra as estatísticas do player")]
+        [SlashCommand("fn-stats", "Mostra as estatísticas do player")]
         public async Task ShowStats([Summary("player"), Autocomplete(typeof(FortnitePlayerHandler))]string player)
         {
             var seasonStatsJSON = _dbContext.FortnitePlayers.FirstOrDefault(x => x.Nome == player).PlayerStatsJSON;
@@ -249,28 +250,7 @@ namespace DiscNite.Commands
             await RespondAsync(response.ToString());
         }
 
-        [SlashCommand("updatechannel", "Atualiza o canal de texto onde as mensagens serão enviadas")]
-        public async Task UpdateChannel()
-        {
-            var guidId = this.Context.Guild.Id;
-
-            var serverInDb = await _dbContext.DiscordServers.FirstOrDefaultAsync(x => x.IdDiscord == guidId);
-
-            if (serverInDb == null)
-            {
-                await RespondAsync("Não estamos acompanhando nenhum player ❌");
-                return;
-            }
-
-            serverInDb.IdTextChannel = this.Context.Channel.Id;
-
-            _dbContext.DiscordServers.Update(serverInDb);
-            await _dbContext.SaveChangesAsync();
-
-            await RespondAsync($"Canal atualizado para {this.Context.Channel.Name}");
-        }
-
-        [SlashCommand("top5", "Mostra os top 5 jogadores por servidor")]
+        [SlashCommand("fn-top5", "Mostra os top 5 jogadores por servidor")]
         public async Task ShowTop5()
         {
             try
@@ -305,7 +285,7 @@ namespace DiscNite.Commands
             }
         }
 
-        [SlashCommand("top5all", "Mostra os top 5 jogadores de todos os servidores")]
+        [SlashCommand("fn-top5all", "Mostra os top 5 jogadores de todos os servidores")]
         public async Task ShowTop5All()
         {
             try
@@ -337,7 +317,7 @@ namespace DiscNite.Commands
             }
         }
 
-        [SlashCommand("shop", "Mostra a loja atual do Fortnite")]
+        [SlashCommand("fn-shop", "Mostra a loja atual do Fortnite")]
         public async Task ShopAsync()
         {
             if (BrShop == null)
@@ -422,52 +402,6 @@ namespace DiscNite.Commands
 
         }
 
-        [SlashCommand("ping", "Pong!")]
-        public async Task PingAsync()
-        {
-            await RespondAsync("Pong!");
-        }
-
-        [SlashCommand("info", "Mostra informações sobre o bot")]
-        public async Task InfoAsync()
-        {
-            var description = "DiscNite é um bot para o Discord que fornece informações sobre o Fortnite";
-
-            description += "\n\n";
-
-            description += "Ele pode mostrar a loja atual do Fortnite, estatísticas de jogadores e muito mais!";
-
-            description += "\n\n";
-
-            description += "Para ver todos os comandos disponíveis, digite /help";
-
-            var embed = new EmbedBuilder()
-                .WithTitle("DiscNite")
-                .WithDescription(description)
-                .WithColor(Color.Blue)
-                .WithFooter("DiscNite")
-                .Build();
-
-            await RespondAsync(embeds: new[] { embed });
-        }
-
-        [SlashCommand("help", "Mostra todos os comandos disponíveis")]
-        public async Task HelpAsync()
-        {
-            var builder = new ComponentBuilder()
-                .WithButton("Loja", "shop", ButtonStyle.Primary)
-                .WithButton("Estatísticas", "stats", ButtonStyle.Primary);
-
-            var embed = new EmbedBuilder()
-                .WithTitle("Comandos disponíveis")
-                .WithDescription("Aqui estão todos os comandos disponíveis")
-                .WithColor(Color.Blue)
-                .WithFooter("Comandos disponíveis")
-                .Build();
-
-            await RespondAsync(embeds: new[] { embed }, components: builder.Build());
-        }
-
         [SlashCommand("itemshop", "Busca um item na loja pelo nome")]
         public async Task ItemShop(string item)
         {
@@ -549,7 +483,7 @@ namespace DiscNite.Commands
             }
         }
 
-        [SlashCommand("playersinfo", "Mostra as informações dos players trackeados")]
+        [SlashCommand("fn-playersinfo", "Mostra as informações dos players trackeados")]
         public async Task PlayersInfo()
         {
             var playersCount = await _dbContext.FortnitePlayers.CountAsync();
