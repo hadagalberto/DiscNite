@@ -48,6 +48,7 @@ class Program
                 services.AddHostedService<InteractionHandlingService>();
                 services.AddHostedService<DiscordStartupService>();
                 services.AddSingleton<FortniteApiService>();
+                services.AddSingleton<PUBGApiService>();
             })
             .Build();
 
