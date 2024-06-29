@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Build the application
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o out DiscNite.csproj
 
 # Use the official .NET 6 runtime image as the base image for the final image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
