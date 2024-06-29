@@ -21,7 +21,7 @@ namespace DiscNite.Commands
         }
 
 
-        [SlashCommand("pubg-track", "Acompanha a evolução do player")]
+        [SlashCommand("pg-track", "Acompanha a evolução do player")]
         public async Task TrackUser(string playerName)
         {
             var playerStats = await _pubgService.GetPlayerStaticsAsync(playerName);
@@ -96,7 +96,7 @@ namespace DiscNite.Commands
             await RespondAsync(response.ToString());
         }
 
-        [SlashCommand("pubg-untrack", "Para de acompanhar o player")]
+        [SlashCommand("pg-untrack", "Para de acompanhar o player")]
         public async Task UntrackUser(string playerName)
         {
             var guidId = Context.Guild.Id;
@@ -116,7 +116,7 @@ namespace DiscNite.Commands
             await RespondAsync($"Player {playerInDb.Nome} removido da lista de acompanhamento ✅");
         }
 
-        [SlashCommand("pubg-list", "Lista os players que estão sendo acompanhados")]
+        [SlashCommand("pg-list", "Lista os players que estão sendo acompanhados")]
         public async Task ListTrackedUsers()
         {
             var guidId = Context.Guild.Id;
@@ -183,7 +183,7 @@ namespace DiscNite.Commands
            }
          */
 
-        [SlashCommand("pubg-update", "Atualiza os dados dos players que estamos acompanhando")]
+        [SlashCommand("pg-update", "Atualiza os dados dos players que estamos acompanhando")]
         public async Task UpdateTrackedUsers()
         {
             var guidId = this.Context.Guild.Id;
@@ -287,7 +287,7 @@ namespace DiscNite.Commands
            }
          */
 
-        [SlashCommand("pubg-stats", "Mostra as estatísticas do player")]
+        [SlashCommand("pg-stats", "Mostra as estatísticas do player")]
         public async Task Stats([Summary("player")] string player)
         {
             var playerInDb = await _dbContext.PUBGPlayers.FirstOrDefaultAsync(x => x.Nome == player);
@@ -434,7 +434,7 @@ namespace DiscNite.Commands
             await RespondAsync(response.ToString());
         }
 
-        [SlashCommand("pubg-playersinfo", "Mostra as informações dos players trackeados")]
+        [SlashCommand("pg-playersinfo", "Mostra as informações dos players trackeados")]
         public async Task PlayersInfo()
         {
             var playersCount = await _dbContext.PUBGPlayers.CountAsync();

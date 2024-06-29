@@ -17,35 +17,46 @@ namespace DiscNite.Utils
 
         private readonly AppDbContext _dbContext;
         private readonly FortniteApiService _fortniteApiService;
+        private readonly PUBGApiService _pubgApiService;
         private readonly DiscordSocketClient _discord;
         private readonly ILogger<HangfireUpdater> _logger;
         private readonly IConfiguration _config;
 
-        public HangfireUpdater(AppDbContext dbContext, FortniteApiService fortniteApiService, DiscordSocketClient discord, IConfiguration config)
+        public HangfireUpdater(AppDbContext dbContext, FortniteApiService fortniteApiService, DiscordSocketClient discord, IConfiguration config, PUBGApiService pubgApiService)
         {
             _dbContext = dbContext;
             _fortniteApiService = fortniteApiService;
             _discord = discord;
             _logger = new Logger<HangfireUpdater>(new LoggerFactory());
             _config = config;
+            _pubgApiService = pubgApiService;
         }
 
         public async Task UpdateFortnitePlayerStats()
         {
             _logger.LogInformation("Updating player stats...");
-            var players = await _dbContext.FortnitePlayers
+            var fortnitePlayers = await _dbContext.FortnitePlayers
                 .Include(x => x.DiscordServer)
                 .ToListAsync();
 
             var servers = await _dbContext.DiscordServers
                 .CountAsync();
 
-            await _discord.SetActivityAsync(new Game($"Trackeando {players.Count} players em {servers} servidores", ActivityType.CustomStatus));
-
-            foreach (var player in players)
+            foreach (var player in fortnitePlayers)
             {
                 await ProcessFortnitePlayerUpdate(player);
             }
+
+            var pubgPlayers = await _dbContext.PUBGPlayers
+                .Include(x => x.DiscordServer)
+                .ToListAsync();
+
+            foreach (var player in pubgPlayers)
+            {
+                await ProcessPUBGPlayerUpdate(player);
+            }
+
+            await _discord.SetActivityAsync(new Game($"Trackeando {fortnitePlayers.Count + pubgPlayers.Count} players em {servers} servidores", ActivityType.CustomStatus));
         }
 
         private async Task ProcessFortnitePlayerUpdate(Models.FortnitePlayer player)
@@ -72,7 +83,7 @@ namespace DiscNite.Utils
                 if (player.Vitorias != stats.Stats.All.Overall.Wins)
                 {
                     var sb = new StringBuilder();
-                    sb.AppendLine($"O jogador **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
+                    sb.AppendLine($"O jogador de Fornite **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
                     sb.AppendLine($"No total agora são {stats.Stats.All.Overall.Wins}");
 
                     player.Vitorias = stats.Stats.All.Overall.Wins;
@@ -89,6 +100,52 @@ namespace DiscNite.Utils
             {
                 _logger.LogError(ex, "Error updating player stats");
             }
+        }
+
+        private async Task ProcessPUBGPlayerUpdate(Models.PUBGPlayer player)
+        {
+            try
+            {
+                var playerStats = await _pubgApiService.GetPlayerStaticsByIdAsync(player.IdDiscord);
+
+                if (playerStats == null)
+                {
+                    return;
+                }
+
+                var stats = playerStats.stats;
+
+                var vitoriasDb = player.VitoriasSolo + player.VitoriasDuo + player.VitoriasQuad;
+                var vitoriasAtuais = stats.GameModeStats.Solo.Wins
+                                     + stats.GameModeStats.Duo.Wins
+                                     + stats.GameModeStats.Squad.Wins
+                                     + stats.GameModeStats.SoloFPP.Wins
+                                     + stats.GameModeStats.DuoFPP.Wins
+                                     + stats.GameModeStats.SquadFPP.Wins;
+
+                if (vitoriasAtuais != vitoriasDb)
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"O jogador de PUBG **{player.Nome}** ganhou mais {vitoriasAtuais - vitoriasDb} {(vitoriasAtuais - vitoriasDb == 1 ? "vitória" : "vitórias")} na temporada atual!");
+                    sb.AppendLine($"No total agora são {vitoriasAtuais}");
+
+                    player.VitoriasSolo = stats.GameModeStats.Solo.Wins + stats.GameModeStats.SoloFPP.Wins;
+                    player.VitoriasDuo = stats.GameModeStats.Duo.Wins + stats.GameModeStats.DuoFPP.Wins;
+                    player.VitoriasQuad = stats.GameModeStats.Squad.Wins + stats.GameModeStats.SquadFPP.Wins;
+
+                    await _discord.GetGuild(player.DiscordServer.IdDiscord).GetTextChannel(player.DiscordServer.IdTextChannel).SendMessageAsync(sb.ToString());
+                }
+
+                player.Nome = playerStats.player.Name;
+                player.PlayerStatsJSON = Newtonsoft.Json.JsonConvert.SerializeObject(stats);
+
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating player stats");
+            }
+            
         }
 
         public async Task ProcessFortniteTopFiveDaily()

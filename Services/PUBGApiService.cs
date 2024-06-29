@@ -35,6 +35,18 @@ namespace DiscNite.Services
             return players.FirstOrDefault();
         }
 
+        public async Task<PubgPlayer> GetPlayerByPlayerId(string playerId)
+        {
+            var requestParameters = new GetPubgPlayersRequest
+            {
+                PlayerIds = [playerId]
+            };
+
+            var players = await _pubgPlayerService.GetPlayersAsync(PubgPlatform.Steam, requestParameters);
+
+            return players.FirstOrDefault();
+        }
+
         public async Task<PUBGPlayerResponse> GetPlayerStaticsAsync(string player)
         {
             PUBGPlayerResponse retorno = null;
@@ -49,6 +61,27 @@ namespace DiscNite.Services
                 var stats = await _pubgPlayerService.GetPlayerSeasonAsync(PubgPlatform.Steam, playerId.Id, currentSeason.Id);
 
                 retorno = new PUBGPlayerResponse(stats, playerId);
+            }
+            catch (Exception)
+            {
+                return retorno;
+            }
+
+            return retorno;
+        }
+
+        public async Task<PUBGPlayerResponse> GetPlayerStaticsByIdAsync(string playerId)
+        {
+            PUBGPlayerResponse retorno = null;
+            try
+            {
+                var seasons = await _pubgSeasonService.GetSeasonsPCAsync();
+
+                var currentSeason = seasons.FirstOrDefault(x => x.IsCurrentSeason);
+
+                var stats = await _pubgPlayerService.GetPlayerSeasonAsync(PubgPlatform.Steam, playerId, currentSeason.Id);
+
+                retorno = new PUBGPlayerResponse(stats, await GetPlayerByPlayerId(playerId));
             }
             catch (Exception)
             {
