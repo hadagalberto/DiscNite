@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Pubg.Net;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DiscNite.Utils
@@ -174,7 +175,7 @@ namespace DiscNite.Utils
                     }
 
                     var sb = new StringBuilder();
-                    sb.AppendLine($"**🏆 Top 5 Jogadores Hoje para o Servidor {server.Nome} 🏆**:");
+                    sb.AppendLine($"**🏆 Top 5 Jogadores de Fortnite hoje para o servidor {server.Nome} 🏆**:");
 
                     foreach (var player in topPlayers)
                     {
@@ -207,6 +208,79 @@ namespace DiscNite.Utils
             {
                 _logger.LogError(ex, "Erro ao processar os 5 melhores jogadores por servidor");
             }
+        }
+
+        public async Task ProcessPUBGTopFiveDaily()
+        {
+            try
+            {
+                _logger.LogInformation("Processando os 5 melhores jogadores por servidor...");
+
+                // Agrupa os jogadores por servidor e obtém os 5 melhores jogadores em cada servidor com base nas vitórias
+                var servers = await _dbContext.DiscordServers
+                    .ToListAsync();
+
+                // download all guids from discord client
+                foreach ( var server in servers) {
+                    var topPlayers = await _dbContext.PUBGPlayers
+                        .Where(x => x.DiscordServer.IdDiscord == server.IdDiscord)
+                        .OrderByDescending(x => x.VitoriasSolo + x.VitoriasDuo + x.VitoriasQuad)
+                        .Take(5)
+                        .ToListAsync();
+
+                    if (topPlayers.Count == 0)
+                    {
+                        return;
+                    }
+
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"**🏆 Top 5 Jogadores de PUBG hoje para o servidor {server.Nome} 🏆**:");
+
+                    foreach (var player in topPlayers)
+                    {
+                        var playerStats = Newtonsoft.Json.JsonConvert.DeserializeObject<PubgStatEntity>(player.PlayerStatsJSON);
+
+                        sb.AppendLine($"🎮 **Jogador:** {player.Nome}");
+                        sb.AppendLine($"🏅 **Vitórias Solo:** {player.VitoriasSolo}");
+                        sb.AppendLine($"🏅 **Vitórias Duo:** {player.VitoriasDuo}");
+                        sb.AppendLine($"🏅 **Vitórias Squad:** {player.VitoriasQuad}");
+                        sb.AppendLine($"🔫 **Kills:** {playerStats.GameModeStats.Solo.Kills + playerStats.GameModeStats.Duo.Kills + playerStats.GameModeStats.Squad.Kills}");
+                        sb.AppendLine("-------------------------------");
+                    }
+
+                    if(_discord.LoginState != LoginState.LoggedIn)
+                    {
+                        await _discord.LoginAsync(TokenType.Bot, _config["token"]);
+                    }
+
+                    var channel = await _discord.GetChannelAsync(server.IdTextChannel);
+
+                    if (channel == null)
+                    {
+                        return;
+                    }
+
+                    await (channel as IMessageChannel).SendMessageAsync(sb.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao processar os 5 melhores jogadores por servidor");
+            }
+        }
+
+        public async Task AtualizarAtividadeDiscord()
+        {
+            var fortnitePlayers = await _dbContext.FortnitePlayers
+                .CountAsync();
+
+            var pubgPlayers = await _dbContext.PUBGPlayers
+                .CountAsync();
+
+            var servers = await _dbContext.DiscordServers
+                .CountAsync();
+
+            await _discord.SetActivityAsync(new Game($"Trackeando {fortnitePlayers + pubgPlayers} players em {servers} servidores", ActivityType.CustomStatus));
         }
 
     }
