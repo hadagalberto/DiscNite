@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using DiscNite.AutoCompleteHandlers;
 using DiscNite.Data;
 using DiscNite.Services;
 using Discord.Interactions;
@@ -185,7 +186,7 @@ namespace DiscNite.Commands
         }
 
         [SlashCommand("pg-stats", "Mostra as estatísticas do player")]
-        public async Task Stats([Summary("player")] string player)
+        public async Task Stats([Summary("player"), Autocomplete(typeof(PUBGPlayerHandler))] string player)
         {
             var playerInDb = await _dbContext.PUBGPlayers.FirstOrDefaultAsync(x => x.Nome == player);
 
