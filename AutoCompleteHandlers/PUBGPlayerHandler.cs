@@ -1,11 +1,11 @@
 ﻿using DiscNite.Data;
-using Discord;
 using Discord.Interactions;
+using Discord;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DiscNite.AutoCompleteHandlers;
 
-public class FortnitePlayerHandler : AutocompleteHandler
+public class PUBGPlayerHandler : AutocompleteHandler
 {
     public override Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context, IAutocompleteInteraction autocompleteInteraction,
         IParameterInfo parameter, IServiceProvider services)
@@ -18,7 +18,7 @@ public class FortnitePlayerHandler : AutocompleteHandler
 
         var db = services.GetRequiredService<AppDbContext>();
 
-        var players = db.FortnitePlayers.Where(x => x.Nome.Contains(input) && x.DiscordServer.IdDiscord == guildId).Take(7).ToList();
+        var players = db.PUBGPlayers.Where(x => x.Nome.Contains(input) && x.DiscordServer.IdDiscord == guildId).Take(7).ToList();
 
         foreach (var player in players)
         {
