@@ -271,16 +271,25 @@ namespace DiscNite.Utils
 
         public async Task AtualizarAtividadeDiscord()
         {
-            var fortnitePlayers = await _dbContext.FortnitePlayers
-                .CountAsync();
+            try
+            {
+                var fortnitePlayers = await _dbContext.FortnitePlayers
+                    .CountAsync();
 
-            var pubgPlayers = await _dbContext.PUBGPlayers
-                .CountAsync();
+                var pubgPlayers = await _dbContext.PUBGPlayers
+                    .CountAsync();
 
-            var servers = await _dbContext.DiscordServers
-                .CountAsync();
+                var servers = await _dbContext.DiscordServers
+                    .CountAsync();
 
-            await _discord.SetActivityAsync(new Game($"Trackeando {fortnitePlayers + pubgPlayers} players em {servers} servidores", ActivityType.CustomStatus));
+                await _discord.SetActivityAsync(new Game(
+                    $"Trackeando {fortnitePlayers + pubgPlayers} players em {servers} servidores",
+                    ActivityType.CustomStatus));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
     }
