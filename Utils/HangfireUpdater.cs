@@ -214,7 +214,7 @@ namespace DiscNite.Utils
         {
             try
             {
-                _logger.LogInformation("Processando os 5 melhores jogadores por servidor...");
+                LogHelper.OnLogAsync(_logger, new LogMessage(LogSeverity.Info, "DiscNite", "Processando os 5 melhores jogadores por servidor..."));
 
                 // Agrupa os jogadores por servidor e obtém os 5 melhores jogadores em cada servidor com base nas vitórias
                 var servers = await _dbContext.DiscordServers
