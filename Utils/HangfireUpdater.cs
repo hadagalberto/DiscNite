@@ -171,7 +171,7 @@ namespace DiscNite.Utils
 
                     if (topPlayers.Count == 0)
                     {
-                        return;
+                        continue;
                     }
 
                     var sb = new StringBuilder();
@@ -230,7 +230,7 @@ namespace DiscNite.Utils
 
                     if (topPlayers.Count == 0)
                     {
-                        return;
+                        continue;
                     }
 
                     var sb = new StringBuilder();

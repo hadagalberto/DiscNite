@@ -45,7 +45,7 @@ namespace DiscNite.Services
             BackgroundJob.Enqueue(() => updater.UpdateFortnitePlayerStats());
             RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdateFortnitePlayerStats(), "*/30 * * * *");
             RecurringJob.AddOrUpdate("PlayerTopFiveFortnite", () => updater.ProcessFortniteTopFiveDaily(), Cron.Daily(23));
-            RecurringJob.AddOrUpdate("PlayerTopFivePUBG", () => updater.ProcessPUBGTopFiveDaily(), Cron.Daily(23, 30));
+            RecurringJob.AddOrUpdate("PlayerTopFivePUBG", () => updater.ProcessPUBGTopFiveDaily(), Cron.Daily(00, 00));
             RecurringJob.AddOrUpdate("Atividade", () => updater.AtualizarAtividadeDiscord(), "*/10 * * * *");
         }
 
