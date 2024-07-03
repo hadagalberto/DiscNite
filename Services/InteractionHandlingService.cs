@@ -47,6 +47,7 @@ namespace DiscNite.Services
             RecurringJob.AddOrUpdate("PlayerTopFiveFortnite", () => updater.ProcessFortniteTopFiveDaily(), Cron.Daily(23));
             RecurringJob.AddOrUpdate("PlayerTopFivePUBG", () => updater.ProcessPUBGTopFiveDaily(), Cron.Daily(00, 00));
             RecurringJob.AddOrUpdate("Atividade", () => updater.AtualizarAtividadeDiscord(), "*/10 * * * *");
+            RecurringJob.RemoveIfExists("PlayerTopFive");
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
