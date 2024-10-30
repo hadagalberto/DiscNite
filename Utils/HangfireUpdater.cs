@@ -33,7 +33,7 @@ namespace DiscNite.Utils
             _pubgApiService = pubgApiService;
         }
 
-        public async Task UpdateFortnitePlayerStats()
+        public async Task UpdatePlayerStats()
         {
             _logger.LogInformation("Updating player stats...");
             var fortnitePlayers = await _dbContext.FortnitePlayers
@@ -57,7 +57,7 @@ namespace DiscNite.Utils
                 await ProcessPUBGPlayerUpdate(player);
             }
 
-            await _discord.SetActivityAsync(new Game($"Trackeando {fortnitePlayers.Count + pubgPlayers.Count} players em {servers} servidores", ActivityType.CustomStatus));
+            //await _discord.SetActivityAsync(new Game($"Trackeando {fortnitePlayers.Count + pubgPlayers.Count} players em {servers} servidores", ActivityType.CustomStatus));
         }
 
         private async Task ProcessFortnitePlayerUpdate(Models.FortnitePlayer player)
@@ -78,10 +78,12 @@ namespace DiscNite.Utils
 
                 if (stats == null)
                 {
+                    // season reset
+                    player.Vitorias = 0;
                     return;
                 }
 
-                if (player.Vitorias != stats.Stats.All.Overall.Wins)
+                if (player.Vitorias > stats.Stats.All.Overall.Wins)
                 {
                     var sb = new StringBuilder();
                     sb.AppendLine($"O jogador de Fornite **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
@@ -124,7 +126,16 @@ namespace DiscNite.Utils
                                      + stats.GameModeStats.DuoFPP.Wins
                                      + stats.GameModeStats.SquadFPP.Wins;
 
-                if (vitoriasAtuais != vitoriasDb)
+                if (vitoriasAtuais == 0)
+                {
+                    // season reset
+                    player.VitoriasSolo = 0;
+                    player.VitoriasDuo = 0;
+                    player.VitoriasQuad = 0;
+                    return;
+                }
+
+                if (vitoriasAtuais > vitoriasDb)
                 {
                     var sb = new StringBuilder();
                     sb.AppendLine($"O jogador de PUBG **{player.Nome}** ganhou mais {vitoriasAtuais - vitoriasDb} {(vitoriasAtuais - vitoriasDb == 1 ? "vitória" : "vitórias")} na temporada atual!");
@@ -282,9 +293,7 @@ namespace DiscNite.Utils
                 var servers = await _dbContext.DiscordServers
                     .CountAsync();
 
-                await _discord.SetActivityAsync(new Game(
-                    $"Trackeando {fortnitePlayers + pubgPlayers} players em {servers} servidores",
-                    ActivityType.CustomStatus));
+                await _discord.SetCustomStatusAsync($"Trackeando {fortnitePlayers + pubgPlayers} players em {servers} servidores");
             }
             catch (Exception ex)
             {

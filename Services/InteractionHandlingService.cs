@@ -42,12 +42,11 @@ namespace DiscNite.Services
 
             var updater = _services.GetService<HangfireUpdater>();
 
-            BackgroundJob.Enqueue(() => updater.UpdateFortnitePlayerStats());
-            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdateFortnitePlayerStats(), "*/30 * * * *");
+            BackgroundJob.Enqueue(() => updater.UpdatePlayerStats());
+            RecurringJob.AddOrUpdate("PlayerUpdater", () => updater.UpdatePlayerStats(), Cron.Hourly);
             RecurringJob.AddOrUpdate("PlayerTopFiveFortnite", () => updater.ProcessFortniteTopFiveDaily(), Cron.Daily(23));
             RecurringJob.AddOrUpdate("PlayerTopFivePUBG", () => updater.ProcessPUBGTopFiveDaily(), Cron.Daily(00, 00));
-            RecurringJob.AddOrUpdate("Atividade", () => updater.AtualizarAtividadeDiscord(), "*/10 * * * *");
-            RecurringJob.RemoveIfExists("PlayerTopFive");
+            RecurringJob.AddOrUpdate("Atividade", () => updater.AtualizarAtividadeDiscord(), Cron.Hourly);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

@@ -30,7 +30,7 @@ class Program
                     AlwaysDownloadUsers = true,
                     MessageCacheSize = 10000,
                     LogLevel = Discord.LogSeverity.Verbose,
-                    GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.Guilds
+                    GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.Guilds | GatewayIntents.GuildPresences
                 });
 
                 services.AddHangfire(config => {
