@@ -36,6 +36,7 @@ namespace DiscNite.Utils
         public async Task UpdatePlayerStats()
         {
             _logger.LogInformation("Updating player stats...");
+            Console.WriteLine("Updating player stats...");
             var fortnitePlayers = await _dbContext.FortnitePlayers
                 .Include(x => x.DiscordServer)
                 .ToListAsync();
@@ -83,7 +84,7 @@ namespace DiscNite.Utils
                     return;
                 }
 
-                if (player.Vitorias > stats.Stats.All.Overall.Wins)
+                if (player.Vitorias < stats.Stats.All.Overall.Wins)
                 {
                     var sb = new StringBuilder();
                     sb.AppendLine($"O jogador de Fornite **{player.Nome}** ganhou mais {stats.Stats.All.Overall.Wins - player.Vitorias} {(stats.Stats.All.Overall.Wins - player.Vitorias == 1 ? "vitória" : "vitórias")} na temporada atual!");
@@ -102,6 +103,7 @@ namespace DiscNite.Utils
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating player stats");
+                Console.WriteLine($"Erro ao atualizar player de Fortnite: {player.Nome}" + ex);
             }
         }
 
@@ -156,6 +158,7 @@ namespace DiscNite.Utils
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating player stats");
+                Console.WriteLine($"Erro ao atualizar player de PUBG: {player.Nome}" + ex);
             }
             
         }
@@ -165,6 +168,7 @@ namespace DiscNite.Utils
             try
             {
                 _logger.LogInformation("Processando os 5 melhores jogadores por servidor...");
+                Console.WriteLine("Processando os 5 melhores jogadores por servidor...");
 
                 // Agrupa os jogadores por servidor e obtém os 5 melhores jogadores em cada servidor com base nas vitórias
                 var servers = await _dbContext.DiscordServers
