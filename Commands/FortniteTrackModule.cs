@@ -194,8 +194,6 @@ namespace DiscNite.Commands
         [SlashCommand("fn-stats", "Mostra as estatísticas do player")]
         public async Task ShowStats([Summary("player"), Autocomplete(typeof(FortnitePlayerHandler))]string player)
         {
-            await DeferAsync().ConfigureAwait(false);
-
             var seasonStatsJSON = _dbContext.FortnitePlayers.FirstOrDefault(x => x.Nome == player).PlayerStatsJSON;
             var lifetimeStats = await _fortniteApiService.GetPlayerStaticsAllTimeAsync(player);
 
